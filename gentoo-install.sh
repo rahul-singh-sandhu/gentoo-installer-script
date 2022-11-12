@@ -193,9 +193,6 @@ mount_volumes() {
 
 chroot_first_run() {
 	cp ${INSTALLER_SRC_DIR}/gentoo-install-part2.sh /mnt/gentoo/root/gentoo-install-part2.sh
-	chroot /mnt/gentoo /bin/bash 
-	chroot /mnt/gentoo source /etc/profile 
-	chroot /mnt/gentoo export PS1="(chroot) ${PS1}"
 	chroot /mnt/gentoo chmod +x /root/gentoo-install-part2.sh
 	chroot /mnt/gentoo /bin/bash /root/gentoo-install-part2.sh
 }
