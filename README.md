@@ -1,6 +1,6 @@
 # Gentoo Installer Script
-A custom script to install gentoo. \n
-Future Goals:
+A custom script to install gentoo.
+\Future Goals:
 * ext4 support
 * XFS support
 * GPU driver installation
