@@ -33,8 +33,15 @@ case $use_swap in
 		use_swap_final=0
 		;;
 esac
+case $use_luks in
+	yes|y|"")
+		use_luks_final=1
+		;;
+	*)
+		use_luks_final=0
+		;;
+esac
 
-echo $use_swap_final
 if [[ $use_swap_final == 1 ]]
 then
 	read -p 'Enter a size for swap space in GB ' swap_space_temp
@@ -187,10 +194,10 @@ mount_volumes() {
 chroot_first_run() {
 	cp ${INSTALLER_SRC_DIR}/gentoo-install-part2.sh /mnt/gentoo/root/gentoo-install-part2.sh
 	chroot /mnt/gentoo /bin/bash 
-	chroot source /etc/profile 
-	chroot export PS1="(chroot) ${PS1}"
-	chroot chmod +x /root/gentoo-install-part2.sh
-	chroot /bin/bash /root/gentoo-install-part2.sh
+	chroot /mnt/gentoo source /etc/profile 
+	chroot /mnt/gentoo export PS1="(chroot) ${PS1}"
+	chroot /mnt/gentoo chmod +x /root/gentoo-install-part2.sh
+	chroot /mnt/gentoo /bin/bash /root/gentoo-install-part2.sh
 }
 
 check_drive_type

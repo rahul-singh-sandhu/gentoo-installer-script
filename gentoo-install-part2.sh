@@ -12,3 +12,5 @@ CODENAME="gentooinstaller"
 COPYRIGHT="Copyright (C) 2022 Rahul Sandhu"
 LICENSE="GNU General Public License 3.0"
 VERSION="0.1"
+
+echo Hello, all tests good
