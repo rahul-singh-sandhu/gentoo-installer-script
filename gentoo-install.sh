@@ -16,10 +16,17 @@ VERSION="0.1"
 INSTALLER_SRC_DIR=$(pwd)
 
 lsblk
+
 read -p 'Enter the drive name: ' drive
 read -p 'Would you like to use swap? (Y/n) ' use_swap_temp
 read -p 'Would you like to use luks encryption (Y/n) ' use_luks_temp
 read -p 'Enter any make opts: ' user_make_opts
+read -p 'Enter your timezone: ' user_timezone
+read -p 'Enter your keymap: ' user_keymap
+read -p 'Enter your locale: ' user_locale
+read -p 'Enter your hostname: ' machine_hostname
+read -p 'Enter your root password: ' user_root_password
+
 use_swap=$(echo ${use_swap_temp,,})
 use_luks=$(echo ${use_luks_temp,,})
 unset use_swap_temp
@@ -193,6 +200,16 @@ mount_volumes() {
 
 chroot_first_run() {
 	cp ${INSTALLER_SRC_DIR}/gentoo-install-part2.sh /mnt/gentoo/root/gentoo-install-part2.sh
+	echo -e "nvme=${nvme}" >> /mnt/gentoo/root/variables
+	echo -e "use_swap_final=${use_swap_final}" >> /mnt/gentoo/root/variables
+	echo -e "use_luks_final=${use_luks_final}" >> /mnt/gentoo/root/variables
+	echo -e "drive=${drive}" >> /mnt/gentoo/root/variables
+	echo -e "user_keymap=${user_keymap}" >> /mnt/gentoo/root/variables
+	echo -e "user_locale=${user_locale}" >> /mnt/gentoo/root/variables
+	echo -e "user_make_opts=${user_make_opts}" >> /mnt/gentoo/root/variables
+	echo -e "user_root_password=${user_root_password}" >> /mnt/gentoo/root/variables
+	echo -e "user_timezone=${user_timezone}" >> /mnt/gentoo/root/variables
+	echo -e "machine_hostname=${machine_hostname}" >> /mnt/gentoo/root/variables
 	chroot /mnt/gentoo chmod +x /root/gentoo-install-part2.sh
 	chroot /mnt/gentoo /bin/bash /root/gentoo-install-part2.sh
 }
@@ -205,4 +222,6 @@ fetch_stage3
 configure_stage3
 chroot_mount_fs
 mount_volumes
+genfstab -U /mnt/gentoo > /mnt/gentoo/etc/fstab
 chroot_first_run
+echo "Install finished."
