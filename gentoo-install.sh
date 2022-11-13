@@ -153,7 +153,7 @@ create_subvols() {
 	btrfs sub create /mnt/gentoo/@
 	btrfs sub create /mnt/gentoo/@home
 	umount /mnt/gentoo
-	mount -o noatime,nodiratime,compress=zstd:1,ssd,subvol=@ ${btrfs_drive_path} /mnt/gentoo
+	mount -o noatime,nodiratime,compress=zstd,ssd,subvol=@ ${btrfs_drive_path} /mnt/gentoo
 }
 
 fetch_stage3() {
@@ -198,6 +198,69 @@ mount_volumes() {
 	fi 
 }
 
+make_fstab() {
+	if [[ $use_swap_final == 1 ]]
+	then
+		if [[ $use_luks_final == 1 ]]
+		then
+			blkid_root_drive=$(blkid -s UUID -o value /dev/mapper/gentoolukstest)
+			echo -e "UUID=${blkid_root_drive}		/		btrfs	rw,noatime,nodiratime,compress=zstd,ssd,space_cache=v2,subvolid=256,subvol=/@	0 1" > /etc/fstab
+			if [[ $nvme == 1 ]]
+			then
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}p1)
+				blkid_swap_drive=$(blkid -s UUID -o value ${drive}p2)
+			else
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}1)
+				blkid_swap_drive=$(blkid -s UUID -o value ${drive}2)
+			fi
+			echo -e "UUID=${blkid_boot_drive}      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_root_drive}	/home     	btrfs     	rw,noatime,nodiratime,compress=zstd:1,ssd,space_cache=v2,subvolid=257,subvol=/@home	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_swap_drive}	none      	swap      	defaults  	0 0" >> /etc/fstab
+		else
+			if [[ $nvme == 1 ]]
+			then
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}p1)
+				blkid_swap_drive=$(blkid -s UUID -o value ${drive}p2)
+				blkid_root_drive=$(blkid -s UUID -o value ${drive}p3)
+			else
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}1)
+				blkid_swap_drive=$(blkid -s UUID -o value ${drive}2)
+				blkid_root_drive=$(blkid -s UUID -o value ${drive}3)
+			echo -e "UUID=${blkid_root_drive}		/		btrfs	rw,noatime,nodiratime,compress=zstd,ssd,space_cache=v2,subvolid=256,subvol=/@	0 1" > /etc/fstab
+			echo -e "UUID=${blkid_boot_drive}      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_root_drive}	/home     	btrfs     	rw,noatime,nodiratime,compress=zstd:1,ssd,space_cache=v2,subvolid=257,subvol=/@home	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_swap_drive}	none      	swap      	defaults  	0 0" >> /etc/fstab
+			fi
+		fi
+	else
+		if [[ $use_luks_final == 1 ]]
+		then
+			blkid_root_drive=$(blkid -s UUID -o value /dev/mapper/gentoolukstest)
+			echo -e "UUID=${blkid_root_drive}		/		btrfs	rw,noatime,nodiratime,compress=zstd,ssd,space_cache=v2,subvolid=256,subvol=/@	0 1" > /etc/fstab
+			if [[ $nvme == 1 ]]
+			then
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}p1)
+			else
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}1)
+			fi
+			echo -e "UUID=${blkid_boot_drive}      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_root_drive}	/home     	btrfs     	rw,noatime,nodiratime,compress=zstd:1,ssd,space_cache=v2,subvolid=257,subvol=/@home	0 2" >> /etc/fstab
+		else
+			if [[ $nvme == 1 ]]
+			then
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}p1)
+				blkid_root_drive=$(blkid -s UUID -o value ${drive}p2)
+			else
+				blkid_boot_drive=$(blkid -s UUID -o value ${drive}1)
+				blkid_root_drive=$(blkid -s UUID -o value ${drive}2)
+			echo -e "UUID=${blkid_root_drive}		/		btrfs	rw,noatime,nodiratime,compress=zstd,ssd,space_cache=v2,subvolid=256,subvol=/@	0 1" > /etc/fstab
+			echo -e "UUID=${blkid_boot_drive}      	/boot     	vfat      	rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro	0 2" >> /etc/fstab
+			echo -e "UUID=${blkid_root_drive}	/home     	btrfs     	rw,noatime,nodiratime,compress=zstd:1,ssd,space_cache=v2,subvolid=257,subvol=/@home	0 2" >> /etc/fstab
+			fi
+		fi
+	fi		
+}
+
 chroot_first_run() {
 	cp ${INSTALLER_SRC_DIR}/gentoo-install-part2.sh /mnt/gentoo/root/gentoo-install-part2.sh
 	echo -e "nvme=${nvme}" >> /mnt/gentoo/root/variables
@@ -222,6 +285,6 @@ fetch_stage3
 configure_stage3
 chroot_mount_fs
 mount_volumes
-genfstab -U /mnt/gentoo > /mnt/gentoo/etc/fstab
+make_fstab
 chroot_first_run
 echo "Install finished."
